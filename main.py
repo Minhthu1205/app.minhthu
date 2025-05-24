@@ -17,27 +17,27 @@ except ImportError:
     st.error("Thư viện 'openpyxl' không được cài đặt. Vui lòng cài đặt bằng lệnh: `pip install openpyxl`.")
     st.stop()
 
-# Set Streamlit page configuration with a softer layout
-st.set_page_config(page_title="Business Dashboard", layout="wide", initial_sidebar_state="expanded")
+# Set Streamlit page configuration with black background and white text
+st.set_page_config(page_title="Tổng quan về doanh nghiệp và dự báo doanh thu", layout="wide", initial_sidebar_state="expanded")
 
-# Custom CSS for softer theme and sidebar styling
+# Custom CSS for black theme with white text and original blue accents
 st.markdown("""
     <style>
-    .main {background-color: #2e2e2e; color: #d3d3d3;}
-    .sidebar .sidebar-content {background-color: #2e2e2e;}
+    .main {background-color: #000000; color: #FFFFFF;}
+    .sidebar .sidebar-content {background-color: #000000;}
     .stButton>button {
-        background-color: #4a7f8e;
-        color: #d3d3d3;
+        background-color: #2a9d8f;
+        color: #FFFFFF;
         border-radius: 5px;
         width: 100%;
         padding: 10px;
         margin-bottom: 10px;
     }
     .stButton>button:hover {
-        background-color: #3a6a78;
-        color: #d3d3d3;
+        background-color: #219d8f;
+        color: #FFFFFF;
     }
-    h1, h2, h3, p, div {color: #d3d3d3;}
+    h1, h2, h3, p, div {color: #FFFFFF;}
     </style>
 """, unsafe_allow_html=True)
 
@@ -90,10 +90,11 @@ if tab_selection == "Tổng quan Doanh nghiệp":
     }
 
     # Create KPI plot
-    fig, axes = plt.subplots(2, 2, figsize=(10, 7), facecolor='#2e2e2e')
+    fig, axes = plt.subplots(2, 2, figsize=(10, 7), facecolor='#000000')
+    plt.style.use('dark_background')
     kpi_labels = ['Revenue', 'Cost', 'Profit', 'Sales']
     kpi_titles = ['Doanh thu (VND)', 'Chi phí (VND)', 'Lợi nhuận (VND)', 'Số lượng bán']
-    kpi_colors = ['#4a7f8e', '#6a8a95', '#8a959c', '#a5a5a5']
+    kpi_colors = ['#2a9d8f', '#e76f51', '#f4a261', '#e9c46a']
 
     for ax, label, title, color in zip(axes.flatten(), kpi_labels, kpi_titles, kpi_colors):
         value = metrics[label]
@@ -104,13 +105,13 @@ if tab_selection == "Tổng quan Doanh nghiệp":
         ax.set_yticks([])
         for spine in ax.spines.values():
             spine.set_visible(True)
-            spine.set_color('#d3d3d3')
+            spine.set_color('#FFFFFF')
             spine.set_linewidth(0.5)
-        ax.text(0.5, 0.75, f"{title}", ha='center', va='center', color='#d3d3d3', fontsize=14, fontweight='bold')
-        ax.text(0.5, 0.45, display_value, ha='center', va='center', color='#d3d3d3', fontsize=20)
-        ax.text(0.5, 0.15, f"▲ {raw_value:,.0f}", ha='center', va='center', color='#a5d6a7', fontsize=12)
+        ax.text(0.5, 0.75, f"{title}", ha='center', va='center', color='#FFFFFF', fontsize=14, fontweight='bold')
+        ax.text(0.5, 0.45, display_value, ha='center', va='center', color='#FFFFFF', fontsize=20)
+        ax.text(0.5, 0.15, f"▲ {raw_value:,.0f}", ha='center', va='center', color='#00ff00', fontsize=12)
 
-    fig.text(0.5, 0.95, 'Tổng Quan KPI', ha='center', va='center', color='#d3d3d3', fontsize=18, fontweight='bold')
+    fig.text(0.5, 0.95, 'Tổng Quan KPI', ha='center', va='center', color='#FFFFFF', fontsize=18, fontweight='bold')
     plt.tight_layout(rect=[0, 0, 1, 0.9])
     st.pyplot(fig)
 
@@ -138,15 +139,15 @@ if tab_selection == "Tổng quan Doanh nghiệp":
                         title='Doanh thu và Lợi nhuận theo Năm',
                         labels={'value': 'Giá trị (VND)', 'variable': 'Chỉ số'},
                         barmode='group',
-                        color_discrete_map={'Tổng số tiền người mua thanh toán': '#4a7f8e', 'Lợi nhuận': '#6a8a95'},
+                        color_discrete_map={'Tổng số tiền người mua thanh toán': '#2a9d8f', 'Lợi nhuận': '#e76f51'},
                         text_auto='.2s')
     fig_yearly.update_layout(
         xaxis_title='Năm',
         yaxis_title='Giá trị (VND)',
         legend_title='Chỉ số',
-        plot_bgcolor='#2e2e2e',
-        paper_bgcolor='#2e2e2e',
-        font_color='#d3d3d3',
+        plot_bgcolor='#000000',
+        paper_bgcolor='#000000',
+        font_color='#FFFFFF',
         height=600,
         width=800,
         bargap=0.2
@@ -156,7 +157,7 @@ if tab_selection == "Tổng quan Doanh nghiệp":
 
 # Tab 2: Prophet Forecasting
 else:
-    st.title("Dự báo Doanh thu với Prophet")
+    st.title("Dự báo Prophet")
 
     # Prepare data for Prophet
     try:
@@ -215,16 +216,16 @@ else:
     # Dynamic Plotly chart
     fig = px.line(future_forecast, x='ds', y='yhat_smooth_million', title='Dự báo Doanh thu với Prophet',
                   labels={'ds': 'Ngày', 'yhat_smooth_million': 'Doanh thu (Triệu VND)'},
-                  color_discrete_sequence=['#4a7f8e'])
-    fig.add_scatter(x=daily_data['ds'], y=daily_data['y_smooth_million'], mode='lines', name='Thực tế', line=dict(color='#6a8a95'))
+                  color_discrete_sequence=['#2a9d8f'])
+    fig.add_scatter(x=daily_data['ds'], y=daily_data['y_smooth_million'], mode='lines', name='Thực tế', line=dict(color='#e9c46a'))
     fig.add_scatter(x=future_forecast['ds'], y=future_forecast['yhat_lower_smooth_million'], mode='lines',
-                    line=dict(color='rgba(74,127,142,0.2)'), name='Khoảng tin cậy (Dưới)', showlegend=False)
+                    line=dict(color='rgba(42,157,143,0.2)'), name='Khoảng tin cậy (Dưới)', showlegend=False)
     fig.add_scatter(x=future_forecast['ds'], y=future_forecast['yhat_upper_smooth_million'], mode='lines',
-                    fill='tonexty', line=dict(color='rgba(74,127,142,0.2)'), name='Khoảng tin cậy (Trên)')
+                    fill='tonexty', line=dict(color='rgba(42,157,143,0.2)'), name='Khoảng tin cậy (Trên)')
     fig.update_layout(
-        plot_bgcolor='#2e2e2e',
-        paper_bgcolor='#2e2e2e',
-        font_color='#d3d3d3',
+        plot_bgcolor='#000000',
+        paper_bgcolor='#000000',
+        font_color='#FFFFFF',
         height=600,
         width=800,
         xaxis_title='Ngày',
