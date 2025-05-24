@@ -7,7 +7,6 @@ from scipy.interpolate import make_interp_spline
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from datetime import datetime
-import uuid
 import requests
 import io
 
@@ -39,8 +38,8 @@ st.markdown("""
 @st.cache_data
 def load_data():
     try:
-        # Google Drive file ID from the provided link
-        file_id = '1hkZZ2ks60wbMXfEeiJsxrCihpve5tpNA'
+        # Updated Google Drive file ID
+        file_id = '1zZhr9qhlQyhXOIQKwwOTOhatRrgCffZn'
         url = f'https://docs.google.com/spreadsheets/d/{file_id}/export?format=xlsx'
         response = requests.get(url)
         response.raise_for_status()
@@ -233,7 +232,7 @@ else:
     ax2.plot(future_forecast['ds'][future_forecast['ds'] > daily_data['ds'].max()],
              future_forecast['yhat_smooth_million'][future_forecast['ds'] > daily_data['ds'].max()],
              '#e76f51', label='Dự đoán tương lai', linewidth=2)
-    ax2.fill_between(future_forecast['ds'][-future_forecast['ds'] <= daily_data['ds'].max()],
+    ax2.fill_between(future_forecast['ds'][future_forecast['ds'] <= daily_data['ds'].max()],
                      future_forecast['yhat_lower_smooth_million'][future_forecast['ds'] <= daily_data['ds'].max()],
                      future_forecast['yhat_upper_smooth_million'][future_forecast['ds'] <= daily_data['ds'].max()],
                      color='skyblue', alpha=0.1, label='Khoảng tin cậy')
