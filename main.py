@@ -14,7 +14,7 @@ import io
 try:
     import openpyxl
 except ImportError:
-    st.error("Thư viện 'openpyxl' không được cài đặt. Vui lòng cài đặt bằng lệnh: `pip install openpyxl`")
+    st.error("Thư viện 'openpyxl' không được cài đặt")
     st.stop()
 
 # Set Streamlit page configuration with a blue-themed layout
