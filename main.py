@@ -10,6 +10,13 @@ from datetime import datetime
 import requests
 import io
 
+# Check for openpyxl dependency
+try:
+    import openpyxl
+except ImportError:
+    st.error("Thư viện 'openpyxl' không được cài đặt. Vui lòng cài đặt bằng lệnh: `pip install openpyxl`")
+    st.stop()
+
 # Set Streamlit page configuration with a blue-themed layout
 st.set_page_config(page_title="Business Dashboard", layout="wide", initial_sidebar_state="expanded")
 
@@ -38,20 +45,22 @@ st.markdown("""
 @st.cache_data
 def load_data():
     try:
-        # Updated Google Drive file ID
-        file_id = '1zZhr9qhlQyhXOIQKwwOTOhatRrgCffZn'
+        # Google Drive file ID from the provided link
+        file_id = '1hkZZ2ks60wbMXfEeiJsxrCihpve5tpNA'
         url = f'https://docs.google.com/spreadsheets/d/{file_id}/export?format=xlsx'
         response = requests.get(url)
         response.raise_for_status()
-        df = pd.read_excel(io.BytesIO(response.content), sheet_name='Sheet1')
+        df = pd.read_excel(io.BytesIO(response.content), sheet_name='Sheet1', engine='openpyxl')
+        # Debug: Display column names for verification
+        st.write("Tên cột trong dữ liệu:", df.columns.tolist())
         return df
     except Exception as e:
-        st.error(f"Không thể tải dữ liệu: {str(e)}")
+        st.error(f"Không thể tải dữ liệu: {str(e)}. Vui lòng đảm bảo link Google Drive được chia sẻ công khai với quyền 'Anyone with the link'. Hoặc tải file Excel về máy và sử dụng local file.")
         return pd.DataFrame()
 
 df_final = load_data()
 if df_final.empty:
-    st.error("Không thể tải dữ liệu. Vui lòng kiểm tra link Google Drive hoặc cấu trúc dữ liệu.")
+    st.error("Không thể tải dữ liệu. Vui lòng kiểm tra link Google Drive hoặc cấu trúc dữ liệu. Để sử dụng local file, cập nhật hàm `load_data()` với đường dẫn file Excel.")
     st.stop()
 df_cop = df_final.copy()
 
@@ -64,13 +73,19 @@ if tab_selection == "Tổng quan Doanh nghiệp":
     st.title("Tổng quan Doanh nghiệp")
     
     # Calculate KPIs
-    revenue = df_final['Tổng số tiền người mua thanh toán'].sum()
-    total_cost = (df_final['Phí cố định'].sum() + 
-                  df_final['Phí Dịch Vụ'].sum() + 
-                  df_final['Phí thanh toán'].sum())
-    shipping_cost = df_final['Phí vận chuyển mà người mua trả'].sum()
-    profit = revenue - total_cost - shipping_cost
-    total_sales = df_final['Số lượng'].sum()
+    try:
+        revenue = df_final['Tổng số tiền người mua thanh toán'].sum()
+        total_cost = (df_final['Phí cố định'].sum() + 
+                      df_final['Phí Dịch Vụ'].sum() + 
+                      df_final['Phí thanh toán'].sum())
+        shipping_cost = df_final['Phí vận chuyển mà người mua trả'].sum()
+        profit = revenue - total_cost - shipping_cost
+        total_sales = df_final['Số lượng'].sum()
+    except KeyError as e:
+        st.error(f"Lỗi: Cột {str(e)} không tồn tại trong dữ liệu. Dưới đây là danh sách cột hiện có:")
+        st.write(df_final.columns.tolist())
+        st.error("Vui lòng cập nhật tên cột trong hàm `load_data()` để khớp với dữ liệu.")
+        st.stop()
 
     metrics = {
         'Revenue': revenue,
@@ -106,20 +121,26 @@ if tab_selection == "Tổng quan Doanh nghiệp":
     st.pyplot(fig)
 
     # Yearly revenue and profit
-    df_final['Năm'] = pd.to_datetime(df_final['Ngày đặt hàng']).dt.year
-    df_final = df_final.fillna(0)
-    df_yearly = df_final.groupby('Năm').agg({
-        'Tổng số tiền người mua thanh toán': 'sum',
-        'Phí cố định': 'sum',
-        'Phí Dịch Vụ': 'sum',
-        'Phí thanh toán': 'sum',
-        'Phí vận chuyển mà người mua trả': 'sum'
-    }).reset_index()
-    df_yearly['Lợi nhuận'] = (df_yearly['Tổng số tiền người mua thanh toán'] -
-                              df_yearly['Phí cố định'] -
-                              df_yearly['Phí Dịch Vụ'] -
-                              df_yearly['Phí thanh toán'] -
-                              df_yearly['Phí vận chuyển mà người mua trả'])
+    try:
+        df_final['Năm'] = pd.to_datetime(df_final['Ngày đặt hàng']).dt.year
+        df_final = df_final.fillna(0)
+        df_yearly = df_final.groupby('Năm').agg({
+            'Tổng số tiền người mua thanh toán': 'sum',
+            'Phí cố định': 'sum',
+            'Phí Dịch Vụ': 'sum',
+            'Phí thanh toán': 'sum',
+            'Phí vận chuyển mà người mua trả': 'sum'
+        }).reset_index()
+        df_yearly['Lợi nhuận'] = (df_yearly['Tổng số tiền người mua thanh toán'] -
+                                  df_yearly['Phí cố định'] -
+                                  df_yearly['Phí Dịch Vụ'] -
+                                  df_yearly['Phí thanh toán'] -
+                                  df_yearly['Phí vận chuyển mà người mua trả'])
+    except KeyError as e:
+        st.error(f"Lỗi: Cột {str(e)} không tồn tại trong dữ liệu. Dưới đây là danh sách cột hiện có:")
+        st.write(df_final.columns.tolist())
+        st.error("Vui lòng cập nhật tên cột trong hàm `load_data()` để khớp với dữ liệu.")
+        st.stop()
 
     fig_yearly = px.bar(df_yearly, x='Năm', y=['Tổng số tiền người mua thanh toán', 'Lợi nhuận'],
                         title='Doanh thu và Lợi nhuận theo Năm',
@@ -146,17 +167,23 @@ else:
     st.title("Dự báo Doanh thu với Prophet")
 
     # Prepare data for Prophet
-    df = df_cop[['Ngày đặt hàng', 'Tổng số tiền người mua thanh toán']].rename(columns={'Ngày đặt hàng': 'ds', 'Tổng số tiền người mua thanh toán': 'y'})
-    df['ds'] = pd.to_datetime(df['ds'], errors='coerce')
-    df = df.dropna(subset=['ds'])
-    daily_data = df.groupby('ds')['y'].sum().reset_index()
-    daily_data = daily_data[daily_data['y'] >= 0]
-    daily_data = daily_data[daily_data['y'] < 1e8]
-    daily_data['y_smooth'] = daily_data['y'].rolling(window=7, center=True, min_periods=1).mean()
-    daily_data['y_million'] = daily_data['y'] / 1_000_000
-    daily_data['y_smooth_million'] = daily_data['y_smooth'] / 1_000_000
-    daily_data['ds_numeric'] = daily_data['ds'].apply(lambda x: x.timestamp())
-    daily_data = daily_data.sort_values('ds_numeric')
+    try:
+        df = df_cop[['Ngày đặt hàng', 'Tổng số tiền người mua thanh toán']].rename(columns={'Ngày đặt hàng': 'ds', 'Tổng số tiền người mua thanh toán': 'y'})
+        df['ds'] = pd.to_datetime(df['ds'], errors='coerce')
+        df = df.dropna(subset=['ds'])
+        daily_data = df.groupby('ds')['y'].sum().reset_index()
+        daily_data = daily_data[daily_data['y'] >= 0]
+        daily_data = daily_data[daily_data['y'] < 1e8]
+        daily_data['y_smooth'] = daily_data['y'].rolling(window=7, center=True, min_periods=1).mean()
+        daily_data['y_million'] = daily_data['y'] / 1_000_000
+        daily_data['y_smooth_million'] = daily_data['y_smooth'] / 1_000_000
+        daily_data['ds_numeric'] = daily_data['ds'].apply(lambda x: x.timestamp())
+        daily_data = daily_data.sort_values('ds_numeric')
+    except KeyError as e:
+        st.error(f"Lỗi: Cột {str(e)} không tồn tại trong dữ liệu. Dưới đây là danh sách cột hiện có:")
+        st.write(df_cop.columns.tolist())
+        st.error("Vui lòng cập nhật tên cột trong hàm `load_data()` để khớp với dữ liệu.")
+        st.stop()
 
     # Smooth actual data
     x = daily_data['ds_numeric']
